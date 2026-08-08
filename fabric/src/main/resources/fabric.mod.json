@@ -1,0 +1,33 @@
+{
+	"schemaVersion": 1,
+	"id": "checkbox",
+	"version": "${version}",
+	"name": "Checkbox",
+	"description": "A client-side todo list with automatic item, mob-kill and countdown tracking, shown on a customisable HUD.",
+	"authors": [
+		"Drinfonty"
+	],
+	"contact": {
+		"sources": "https://github.com/Drinfonty/CheckboxMC",
+		"issues": "https://github.com/Drinfonty/CheckboxMC/issues"
+	},
+	"license": "CC0-1.0",
+	"environment": "client",
+	"entrypoints": {
+		"client": [
+			"com.drinfonty.checkbox.fabric.CheckboxFabricClient"
+		]
+	},
+	"mixins": [
+		{
+			"config": "checkbox.client.mixins.json",
+			"environment": "client"
+		}
+	],
+	"depends": {
+		"fabricloader": ">=0.16.0",
+		"minecraft": "${minecraftDependency}",
+		"java": ">=25",
+		"fabric-api": "*"
+	}
+}
