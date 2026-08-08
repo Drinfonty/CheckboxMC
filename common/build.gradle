@@ -13,6 +13,21 @@ dependencies {
 	// runtime classpath and out of the published jars, so :neoforge is unaffected - this
 	// only gives javac the annotation classes it is already being asked to read.
 	compileOnly "net.fabricmc:fabric-loader:${project.loader_version}"
+
+	// The model and store layers deliberately contain no Minecraft classes, so they can be
+	// tested in a plain JVM with no game bootstrap. Anything that needs a live client (see
+	// ScopeResolver) stays out of these tests by construction.
+	testImplementation platform("org.junit:junit-bom:5.13.4")
+	testImplementation "org.junit.jupiter:junit-jupiter"
+	testRuntimeOnly "org.junit.platform:junit-platform-launcher"
+}
+
+tasks.named('test') {
+	useJUnitPlatform()
+	testLogging {
+		events "failed"
+		exceptionFormat "full"
+	}
 }
 
 tasks.withType(JavaCompile).configureEach {

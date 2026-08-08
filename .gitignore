@@ -31,6 +31,9 @@ run/
 run-testjar/
 run-prod/
 
+# Log4j output from test runs and dev clients
+logs/
+
 # Java / Crash logs
 hs_err_*.log
 replay_*.log

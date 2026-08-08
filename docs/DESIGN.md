@@ -90,15 +90,18 @@ checkbox/
 ├── Checkbox.java                  # MOD_ID, LOGGER, DEBUG flag, id(String)
 ├── CheckboxClient.java            # client lifecycle facade the loaders call into
 ├── model/
-│   ├── TodoEntry.java             # sealed interface
+│   ├── TodoEntry.java             # sealed abstract base: id, text, order, scope, dirty
 │   ├── TextEntry.java
 │   ├── CounterEntry.java          # items + kills (one type, two match kinds)
 │   ├── TimerEntry.java
 │   ├── TodoList.java              # ordered list + mutation + dirty flag
-│   └── EntryMatch.java            # ITEM | ITEM_TAG | ENTITY | ENTITY_TAG + Identifier
+│   ├── EntryScope.java            # WORLD | GLOBAL
+│   └── EntryMatch.java            # ITEM | ITEM_TAG | ENTITY | ENTITY_TAG + registry id
 ├── store/
-│   ├── TodoStore.java             # scope resolution, load/save, atomic writes
-│   └── StoreScope.java            # WORLD (sp/<save> | mp/<host_port>) | GLOBAL
+│   ├── TodoStore.java             # the two live lists, debounced atomic save
+│   ├── TodoJson.java              # tolerant read/write of the list file format
+│   ├── StoreScope.java            # WORLD (sp/<save> | mp/<host_port>) | GLOBAL
+│   └── ScopeResolver.java         # the one store class that touches Minecraft
 ├── config/
 │   └── CheckboxConfig.java        # HUD + behaviour settings, config/checkbox/config.json
 ├── track/
@@ -144,8 +147,15 @@ loaders do not justify the ceremony, and RedFX's direct approach has held up.
 
 ## 4. Data model
 
-`TodoEntry` is a sealed interface with three implementations. Shared fields: `id` (UUID),
-`text`, `createdAt`, `order`, `scope`, `done`/`completedAt`.
+`TodoEntry` is a sealed abstract class with three subclasses. Shared state: `id` (UUID),
+`text`, `createdAt`, `order`, `scope`, `completedAt`, and a per-entry dirty flag. `isDone()`
+is abstract: text entries store it, counters derive it from `progress >= target`, timers from
+`state == EXPIRED`.
+
+The dirty flag lives on the entry rather than only on the list because trackers hold an entry
+directly and have no reason to know which list owns it; a per-entry flag means a progress
+update cannot be lost by forgetting to notify the list. `TodoList.isDirty()` is the union of
+its own structural changes and its entries'.
 
 * **TextEntry** — nothing but the checkbox.
 * **CounterEntry** — `match` (`EntryMatch`), `target`, `progress`, `countMode`
@@ -158,6 +168,13 @@ loaders do not justify the ceremony, and RedFX's direct approach has held up.
 resolves against the item registry or the entity-type registry, and which event feeds it.
 Keeping them unified means one progress-bar renderer, one completion path, one edit screen
 layout, and one serialiser.
+
+**`EntryMatch` holds the registry id as a `String`, not an `Identifier`.** That keeps the
+whole model and store layer free of Minecraft classes, so it is unit testable in a plain JVM
+with no game bootstrap — which is most of why the layer has real test coverage at all.
+Resolution against the item and entity registries happens in `track/`, where a client and its
+registries actually exist. Ids are normalised on the way in (lower-cased, `#` stripped, bare
+paths defaulted to `minecraft:`) so `Oak_Log` and `minecraft:oak_log` are one entry.
 
 Unresolvable ids (`minecraft:oak_log` on a client whose registry lacks it, or a modded id
 after the mod is removed) are kept verbatim in JSON and rendered as a greyed-out row with a
