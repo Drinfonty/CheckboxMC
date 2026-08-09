@@ -149,28 +149,30 @@ class TodoJsonTest {
 	}
 
 	@Test
-	void autoLabelSurvivesARoundTripAndDefaultsOff() {
+	void counterTextIsKeptAsAFallbackLabel() {
+		// A counter's label is generated for display, but the text still round-trips: it is
+		// what gets shown if the id stops resolving on this client.
 		TodoList list = new TodoList();
-		CounterEntry auto = CounterEntry.create("Collect 8 Oak Log", EntryScope.WORLD, T0,
+		CounterEntry counter = CounterEntry.create("Collect 8 Oak Log", EntryScope.WORLD, T0,
 				EntryMatch.item("oak_log"), 8, CounterEntry.CountMode.ACQUIRED);
-		auto.setAutoLabel(true);
-		CounterEntry manual = CounterEntry.create("My own words", EntryScope.WORLD, T0 + 1,
-				EntryMatch.item("stone"), 8, CounterEntry.CountMode.ACQUIRED);
-		list.add(auto);
-		list.add(manual);
+		list.add(counter);
 
 		TodoList reloaded = TodoJson.parse(TodoJson.write(list)).list();
-		assertTrue(((CounterEntry) reloaded.find(auto.id()).orElseThrow()).autoLabel());
-		assertFalse(((CounterEntry) reloaded.find(manual.id()).orElseThrow()).autoLabel());
+		assertEquals("Collect 8 Oak Log", reloaded.find(counter.id()).orElseThrow().text());
+	}
 
-		// Entries written before the flag existed must load as manually labelled.
+	@Test
+	void filesWrittenWithTheRetiredAutoLabelFlagStillLoad() {
 		String legacy = """
-				{"entries":[{"type":"COUNTER","text":"old entry",
-				  "match":{"kind":"ITEM","id":"minecraft:stone"},"target":4}]}
+				{"entries":[{"type":"COUNTER","text":"Collect 4 Stone","autoLabel":true,
+				  "match":{"kind":"ITEM","id":"minecraft:stone"},"target":4,"progress":2}]}
 				""";
-		CounterEntry old = (CounterEntry) TodoJson.parse(legacy).list().entries().get(0);
-		assertFalse(old.autoLabel());
-		assertEquals("old entry", old.text());
+		TodoJson.ParseResult result = TodoJson.parse(legacy);
+
+		assertFalse(result.damaged());
+		CounterEntry old = (CounterEntry) result.list().entries().get(0);
+		assertEquals("Collect 4 Stone", old.text());
+		assertEquals(2, old.progress());
 	}
 
 	@Test

@@ -38,14 +38,6 @@ public final class CounterEntry extends TodoEntry {
 	private int progress;
 	private CountMode countMode;
 
-	/**
-	 * When set, the stored text is only a fallback and the display layer regenerates the
-	 * label from the current target and the tracked thing's translated name. Kept as a flag
-	 * rather than generating once at creation so that changing the target from 8 to 16 does
-	 * not leave a description still claiming 8.
-	 */
-	private boolean autoLabel;
-
 	public CounterEntry(UUID id, String text, EntryScope scope, long createdAt,
 			EntryMatch match, int target, CountMode countMode) {
 		super(id, text, scope, createdAt);
@@ -123,17 +115,6 @@ public final class CounterEntry extends TodoEntry {
 		setProgress(0, nowMillis);
 	}
 
-	public boolean autoLabel() {
-		return autoLabel;
-	}
-
-	public void setAutoLabel(boolean autoLabel) {
-		if (autoLabel != this.autoLabel) {
-			this.autoLabel = autoLabel;
-			markDirty();
-		}
-	}
-
 	public CountMode countMode() {
 		return countMode;
 	}
@@ -162,13 +143,18 @@ public final class CounterEntry extends TodoEntry {
 		return Math.max(TARGET_MIN, Math.min(TARGET_MAX, target));
 	}
 
-	/** Rebuilds an entry from persisted state. For the storage codec only. */
+	/**
+	 * Rebuilds an entry from persisted state. For the storage codec only.
+	 *
+	 * <p>The stored text is only a fallback: a counter's label is generated for display from
+	 * its target and the tracked thing's name, and is only read back from here when the id no
+	 * longer resolves on this client.
+	 */
 	public static CounterEntry restored(UUID id, String text, EntryScope scope, long createdAt,
 			int order, EntryMatch match, int target, int progress, CountMode countMode,
-			boolean autoLabel, long completedAt) {
+			long completedAt) {
 		CounterEntry entry = new CounterEntry(id, text, scope, createdAt, match, target, countMode);
 		entry.setOrder(order);
-		entry.autoLabel = autoLabel;
 		entry.progress = Math.max(0, Math.min(entry.target, progress));
 		entry.setCompletedAt(entry.isDone() ? completedAt : 0L);
 		return entry;

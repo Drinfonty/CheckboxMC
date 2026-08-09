@@ -19,10 +19,17 @@ public final class EntryLabels {
 	private EntryLabels() {
 	}
 
-	/** The description to show: the player's own text, or a generated one. */
+	/**
+	 * The description to show. Counters describe themselves, so their label is generated
+	 * live - it follows an edited target and the player's language. The stored text is used
+	 * only when the id no longer resolves on this client, where it preserves the last name
+	 * this entry was known by instead of falling back to a raw registry id.
+	 */
 	public static Component labelOf(TodoEntry entry) {
-		if (entry instanceof CounterEntry counter && counter.autoLabel()) {
-			return generate(counter);
+		if (entry instanceof CounterEntry counter) {
+			return resolver().isResolvable(counter.match())
+					? generate(counter)
+					: Component.literal(counter.text());
 		}
 		return Component.literal(entry.text());
 	}

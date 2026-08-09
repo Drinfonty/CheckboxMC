@@ -42,11 +42,12 @@ position in the list, and a storage `scope`.
 
 * Example: *"Collect 8 oak logs"* → `match = ITEM minecraft:oak_log`, `target = 8`.
 * `target` MUST be an integer in `1..9999`.
-* The description is **optional**. Left blank, the entry sets `autoLabel` and its label is
-  generated for display as `Collect <target> <item name>` (`Kill <target> <entity name>` for
-  §2.3), using the translated name and the *current* target, so editing the target updates the
-  description. The generated text is also stored, as a fallback for a client that cannot
-  resolve the id. Typing a description clears `autoLabel`; clearing the field restores it.
+* Counters have **no editable description**. The label is generated for display as
+  `Collect <target> <item name>` (`Kill <target> <entity name>` for §2.3) from the translated
+  name and the *current* target, so editing the target updates the description and the label
+  follows the player's language. The generated text is also stored, and is shown only when the
+  id no longer resolves on that client — preserving the last name the entry was known by
+  rather than falling back to a raw registry id.
 * `progress` is clamped to `0..target`.
 * **Count mode** (per entry):
 
@@ -319,7 +320,7 @@ Realms) falling back to `global`.
       "id": "1b2c…", "type": "COUNTER", "text": "Collect oak logs",
       "order": 1, "scope": "WORLD",
       "match": { "kind": "ITEM", "id": "minecraft:oak_log" },
-      "target": 8, "progress": 3, "countMode": "ACQUIRED", "autoLabel": true,
+      "target": 8, "progress": 3, "countMode": "ACQUIRED",
       "done": false, "createdAt": 1765200100000, "completedAt": null
     },
     {

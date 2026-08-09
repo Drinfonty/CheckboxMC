@@ -109,16 +109,18 @@ public class EntryEditScreen extends Screen {
 
 		// Counters can describe themselves, so the field is optional there and the hint shows
 		// what will be used instead.
-		this.textBox = field(x, y, type == TodoEntry.Type.COUNTER
-				? "Description (optional)"
-				: "Description");
-		this.textBox.setMaxLength(TodoEntry.TEXT_MAX_LENGTH);
-		this.textBox.setResponder(value -> {
-			textValue = value;
-			validate();
-		});
-		this.textBox.setValue(textValue);
-		y += ROW + 6;
+		// Counters describe themselves from what they track, so there is no description to
+		// write - offering one only invites a label that contradicts the entry.
+		if (hasDescription()) {
+			this.textBox = field(x, y, "Description");
+			this.textBox.setMaxLength(TodoEntry.TEXT_MAX_LENGTH);
+			this.textBox.setResponder(value -> {
+				textValue = value;
+				validate();
+			});
+			this.textBox.setValue(textValue);
+			y += ROW + 6;
+		}
 
 		if (type == TodoEntry.Type.COUNTER) {
 			boolean item = matchKind.isItem();
@@ -216,7 +218,12 @@ public class EntryEditScreen extends Screen {
 		layoutReady = true;
 		updateSuggestions();
 		validate();
-		setInitialFocus(this.textBox);
+		setInitialFocus(this.textBox != null ? this.textBox : this.idBox);
+	}
+
+	/** Only text entries and timers carry a description the player writes. */
+	private boolean hasDescription() {
+		return type != TodoEntry.Type.COUNTER;
 	}
 
 	private EditBox field(int x, int y, String hint) {
@@ -249,9 +256,7 @@ public class EntryEditScreen extends Screen {
 			return;
 		}
 
-		// An auto-labelled entry starts with an empty field, so saving unchanged keeps it
-		// automatic.
-		if (!(existing instanceof CounterEntry counter && counter.autoLabel())) {
+		if (hasDescription()) {
 			this.textValue = existing.text();
 		}
 		this.scope = existing.scope();
@@ -371,10 +376,7 @@ public class EntryEditScreen extends Screen {
 	}
 
 	private String check() {
-		if (textBox == null) {
-			return "Loading";
-		}
-		if (textBox.getValue().isBlank() && type != TodoEntry.Type.COUNTER) {
+		if (hasDescription() && textBox.getValue().isBlank()) {
 			return "Give the entry a description";
 		}
 		if (!CheckboxClient.store().isOpen()) {
@@ -442,7 +444,7 @@ public class EntryEditScreen extends Screen {
 			return;
 		}
 		long now = System.currentTimeMillis();
-		String text = textBox.getValue().strip();
+		String text = hasDescription() ? textBox.getValue().strip() : "";
 
 		if (existing != null) {
 			applyEdits(text, now);
@@ -457,17 +459,13 @@ public class EntryEditScreen extends Screen {
 		return switch (type) {
 			case TEXT -> TextEntry.create(text, scope, now);
 			case COUNTER -> {
-				boolean auto = text.isBlank();
-				CounterEntry counter = CounterEntry.create(
-						auto ? "Counter" : text, scope, now,
+				CounterEntry counter = CounterEntry.create("Counter", scope, now,
 						new EntryMatch(matchKind, idBox.getValue()),
 						parseInt(targetBox.getValue()), countMode);
-				if (auto) {
-					counter.setAutoLabel(true);
-					// Store the generated text too: a client that cannot resolve the id later
-					// still shows something better than "Counter".
-					counter.setText(EntryLabels.generate(counter).getString());
-				}
+				// The label is generated for display, but the generated text is stored as
+				// well: a client that cannot resolve the id later still shows something
+				// better than a raw registry name.
+				counter.setText(EntryLabels.generate(counter).getString());
 				yield counter;
 			}
 			case TIMER -> {
@@ -493,12 +491,8 @@ public class EntryEditScreen extends Screen {
 				counter.setMatch(new EntryMatch(matchKind, idBox.getValue()));
 				counter.setTarget(parseInt(targetBox.getValue()), now);
 				counter.setCountMode(countMode);
-				// Clearing the description hands the label back to the generator; typing one
-				// takes it back.
-				counter.setAutoLabel(text.isBlank());
-				if (text.isBlank()) {
-					counter.setText(EntryLabels.generate(counter).getString());
-				}
+				// Keep the stored fallback in step with the new target and item.
+				counter.setText(EntryLabels.generate(counter).getString());
 			}
 			case TimerEntry timer -> timer.setDuration(durationMillis());
 			default -> {
