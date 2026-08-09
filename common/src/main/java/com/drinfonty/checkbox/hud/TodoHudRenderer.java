@@ -37,6 +37,15 @@ public final class TodoHudRenderer {
 
 	private final HudLayoutCache cache = new HudLayoutCache();
 
+	/** Where the widget was last drawn, so the position editor can outline and drag it. */
+	private int lastX;
+	private int lastY;
+	private int lastWidth;
+	private int lastHeight;
+
+	/** Set by the position editor, which must show the widget even when it is switched off. */
+	private boolean forceVisible;
+
 	private TodoHudRenderer() {
 	}
 
@@ -47,6 +56,26 @@ public final class TodoHudRenderer {
 	/** Forces a re-layout, for when a screen edits settings or entries. */
 	public void invalidate() {
 		cache.invalidate();
+	}
+
+	public void setForceVisible(boolean forceVisible) {
+		this.forceVisible = forceVisible;
+	}
+
+	public int lastX() {
+		return lastX;
+	}
+
+	public int lastY() {
+		return lastY;
+	}
+
+	public int lastWidth() {
+		return lastWidth;
+	}
+
+	public int lastHeight() {
+		return lastHeight;
 	}
 
 	public void render(GuiGraphicsExtractor graphics, DeltaTracker deltaTracker) {
@@ -82,6 +111,11 @@ public final class TodoHudRenderer {
 		int scaledHeight = Math.round(height * config.scale);
 		int x = config.anchor.resolveX(graphics.guiWidth(), scaledWidth, config.offsetX);
 		int y = config.anchor.resolveY(graphics.guiHeight(), scaledHeight, config.offsetY);
+
+		this.lastX = x;
+		this.lastY = y;
+		this.lastWidth = scaledWidth;
+		this.lastHeight = scaledHeight;
 
 		Matrix3x2fStack pose = graphics.pose();
 		pose.pushMatrix();
@@ -182,8 +216,15 @@ public final class TodoHudRenderer {
 				: HudColors.TIMER_EXPIRED_B;
 	}
 
-	private static boolean shouldRender(Minecraft minecraft, CheckboxConfig config) {
-		if (!config.hudVisible || minecraft.level == null || minecraft.player == null) {
+	private boolean shouldRender(Minecraft minecraft, CheckboxConfig config) {
+		if (minecraft.level == null || minecraft.player == null) {
+			return false;
+		}
+		// The position editor needs to see the widget it is moving, whatever the settings say.
+		if (forceVisible) {
+			return true;
+		}
+		if (!config.hudVisible) {
 			return false;
 		}
 		// F1. In 26.2 this lives on Hud rather than Options.

@@ -14,6 +14,7 @@ import net.minecraft.client.Minecraft;
 import net.minecraft.client.gui.GuiGraphicsExtractor;
 import net.minecraft.client.gui.components.Button;
 import net.minecraft.client.gui.components.ObjectSelectionList;
+import net.minecraft.client.gui.screens.ConfirmScreen;
 import net.minecraft.client.gui.screens.Screen;
 import net.minecraft.network.chat.Component;
 
@@ -81,10 +82,12 @@ public class CheckboxScreen extends Screen {
 		addRow(margin, y, cell5, editButton, toggleButton, upButton, downButton, deleteButton);
 
 		y += BUTTON_HEIGHT + GAP;
-		int cell3 = (usable - GAP * 2) / 3;
+		int cell4 = (usable - GAP * 3) / 4;
 		this.hudButton = addButton(hudButtonLabel(), true, this::toggleHud);
-		addRow(margin, y, cell3,
+		addRow(margin, y, cell4,
 				hudButton,
+				addButton("HUD Settings", true,
+						() -> this.minecraft.setScreenAndShow(new HudSettingsScreen(this))),
 				addButton("Clear Completed", canAdd, this::clearCompleted),
 				addButton("Done", true, this::onClose));
 
@@ -189,10 +192,25 @@ public class CheckboxScreen extends Screen {
 		}
 	}
 
+	/**
+	 * SPEC §4.1: deleting one entry is immediate, but clearing every completed entry asks
+	 * first - it is the one action here that can throw away more than the player meant to.
+	 */
 	private void clearCompleted() {
-		if (store().clearCompleted() > 0) {
-			rebuild();
+		long completed = store().entries().stream().filter(TodoEntry::isDone).count();
+		if (completed == 0) {
+			return;
 		}
+		this.minecraft.setScreenAndShow(new ConfirmScreen(
+				confirmed -> {
+					if (confirmed && store().clearCompleted() > 0) {
+						rebuild();
+					}
+					this.minecraft.setScreenAndShow(this);
+				},
+				Component.literal("Clear completed entries?"),
+				Component.literal("This removes " + completed
+						+ (completed == 1 ? " finished entry." : " finished entries."))));
 	}
 
 	/** Rebuilds the rows, keeping the selection on the given entry when it still exists. */
