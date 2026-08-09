@@ -3,6 +3,8 @@
 	"package": "com.drinfonty.checkbox.client.mixin",
 	"compatibilityLevel": "JAVA_25",
 	"client": [
+		"ClientPacketListenerMixin",
+		"LivingEntityMixin"
 	],
 	"injectors": {
 		"defaultRequire": 1
