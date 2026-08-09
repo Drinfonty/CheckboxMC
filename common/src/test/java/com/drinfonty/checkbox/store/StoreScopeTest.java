@@ -38,6 +38,22 @@ class StoreScopeTest {
 	}
 
 	@Test
+	void saveDirectoryPathsYieldTheFolderName() {
+		// Minecraft's LevelResource.ROOT resolves to a path ending in ".", which is how every
+		// singleplayer world quietly ended up sharing the global list.
+		assertEquals("sp/new_world.json",
+				StoreScope.singleplayerFromPath(java.nio.file.Path.of("run/saves/New World/."))
+						.relativePath());
+		assertEquals("sp/new_world.json",
+				StoreScope.singleplayerFromPath(java.nio.file.Path.of("run/saves/New World"))
+						.relativePath());
+		assertEquals("sp/new_world.json",
+				StoreScope.singleplayerFromPath(java.nio.file.Path.of("run/saves/New World/x/.."))
+						.relativePath());
+		assertEquals(StoreScope.global(), StoreScope.singleplayerFromPath(null));
+	}
+
+	@Test
 	void unusableNamesFallBackToGlobal() {
 		assertEquals(StoreScope.global(), StoreScope.singleplayer(""));
 		assertEquals(StoreScope.global(), StoreScope.singleplayer(null));

@@ -50,6 +50,21 @@ public final class StoreScope {
 		return key.isEmpty() ? GLOBAL : new StoreScope(Kind.SINGLEPLAYER, key);
 	}
 
+	/**
+	 * Derives a singleplayer scope from the save directory.
+	 *
+	 * <p>Normalises first, because Minecraft's {@code LevelResource.ROOT} resolves to a path
+	 * ending in {@code "."} - taking the file name of that raw path yields {@code "."}, which
+	 * sanitises to nothing and silently sends every singleplayer world to the global list.
+	 */
+	public static StoreScope singleplayerFromPath(java.nio.file.Path worldRoot) {
+		if (worldRoot == null) {
+			return GLOBAL;
+		}
+		java.nio.file.Path folder = worldRoot.toAbsolutePath().normalize().getFileName();
+		return folder == null ? GLOBAL : singleplayer(folder.toString());
+	}
+
 	/** @param address the server address, with or without a port */
 	public static StoreScope multiplayer(String address) {
 		String key = sanitize(address);

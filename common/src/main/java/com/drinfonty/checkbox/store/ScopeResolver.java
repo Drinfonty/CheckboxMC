@@ -26,10 +26,7 @@ public final class ScopeResolver {
 			// The save folder name, not the display name: two saves can share a display name.
 			try {
 				Path root = minecraft.getSingleplayerServer().getWorldPath(LevelResource.ROOT);
-				Path folder = root.getFileName();
-				if (folder != null) {
-					return StoreScope.singleplayer(folder.toString());
-				}
+				return StoreScope.singleplayerFromPath(root);
 			} catch (RuntimeException e) {
 				Checkbox.LOGGER.warn("Could not resolve the save folder; using the global list: {}",
 						e.toString());
