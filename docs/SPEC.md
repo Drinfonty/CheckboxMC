@@ -42,6 +42,11 @@ position in the list, and a storage `scope`.
 
 * Example: *"Collect 8 oak logs"* → `match = ITEM minecraft:oak_log`, `target = 8`.
 * `target` MUST be an integer in `1..9999`.
+* The description is **optional**. Left blank, the entry sets `autoLabel` and its label is
+  generated for display as `Collect <target> <item name>` (`Kill <target> <entity name>` for
+  §2.3), using the translated name and the *current* target, so editing the target updates the
+  description. The generated text is also stored, as a fallback for a client that cannot
+  resolve the id. Typing a description clears `autoLabel`; clearing the field restores it.
 * `progress` is clamped to `0..target`.
 * **Count mode** (per entry):
 
@@ -163,13 +168,20 @@ Row format:
 
 ```
 [ ] Build a house
-[ ] Collect oak logs        3/8   ▰▰▰▱▱▱▱▱
-[x] Kill zombies           10/10
+[ ] Collect 8 Oak Log       3/8 <icon>
+    ▰▰▰▱▱▱▱▱
+[x] Kill 10 Zombie        10/10 <icon>
 [ ] Furnace batch            4:31
 ```
 
-* Incomplete entries use `[ ]`, complete use `[x]` plus strikethrough.
+* Incomplete entries use `[ ]`, complete use `[x]` plus strikethrough. Completed rows drop
+  the text shadow: Minecraft's shadow redraws the glyphs *and* the strikethrough a pixel
+  down, which makes 9px grey text unreadable.
 * Counter rows MUST show `progress/target`; the bar is optional per `showProgressBar`.
+* Tracked rows SHOULD show an icon at the right edge — the item itself, the mob's spawn egg
+  for a kill counter, and a clock for a timer, so the tracked types line up. Items draw at
+  16×16 and are scaled to 8px to fit the row. Tag matches and unresolvable ids show no icon;
+  neither do plain text entries, which have no value column either.
 * Timer rows MUST show remaining time and MUST blink while `EXPIRED`.
 
 ### 3.4 Ordering
@@ -299,7 +311,7 @@ Realms) falling back to `global`.
       "id": "1b2c…", "type": "COUNTER", "text": "Collect oak logs",
       "order": 1, "scope": "WORLD",
       "match": { "kind": "ITEM", "id": "minecraft:oak_log" },
-      "target": 8, "progress": 3, "countMode": "ACQUIRED",
+      "target": 8, "progress": 3, "countMode": "ACQUIRED", "autoLabel": true,
       "done": false, "createdAt": 1765200100000, "completedAt": null
     },
     {

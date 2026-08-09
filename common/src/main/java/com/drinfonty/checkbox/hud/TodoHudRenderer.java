@@ -9,6 +9,7 @@ import net.minecraft.client.Minecraft;
 import net.minecraft.client.gui.Font;
 import net.minecraft.client.gui.GuiGraphicsExtractor;
 import net.minecraft.network.chat.Component;
+import net.minecraft.world.item.ItemStack;
 import org.joml.Matrix3x2fStack;
 
 /**
@@ -168,9 +169,14 @@ public final class TodoHudRenderer {
 
 		graphics.text(font, row.label(), x, y, HudColors.argb(rgb, alpha), shadow);
 
+		// Laid out from the right edge inwards: icon last, then the value beside it.
+		int right = width - PADDING;
+		if (!row.icon().isEmpty()) {
+			drawIcon(graphics, row.icon(), right - HudLayoutCache.ICON_SIZE, y);
+			right -= HudLayoutCache.ICON_SIZE + HudLayoutCache.ICON_GAP;
+		}
 		if (!row.value().isEmpty()) {
-			int valueX = width - PADDING - row.valueWidth();
-			graphics.text(font, Component.literal(row.value()), valueX, y,
+			graphics.text(font, Component.literal(row.value()), right - row.valueWidth(), y,
 					HudColors.argb(row.expiredTimer() ? rgb : HudColors.VALUE, alpha), shadow);
 		}
 
@@ -186,6 +192,20 @@ public final class TodoHudRenderer {
 						HudColors.argb(fill, alpha));
 			}
 		}
+	}
+
+	/**
+	 * Items always draw at 16x16, which would dwarf a 9px text row, so the icon is scaled down
+	 * on the matrix stack rather than resized.
+	 */
+	public static void drawIcon(GuiGraphicsExtractor graphics, ItemStack stack, int x, int y) {
+		float scale = HudLayoutCache.ICON_SIZE / 16f;
+		Matrix3x2fStack pose = graphics.pose();
+		pose.pushMatrix();
+		pose.translate(x, y);
+		pose.scale(scale, scale);
+		graphics.item(stack, 0, 0);
+		pose.popMatrix();
 	}
 
 	private static void drawRowBackdrop(GuiGraphicsExtractor graphics, CheckboxConfig config,

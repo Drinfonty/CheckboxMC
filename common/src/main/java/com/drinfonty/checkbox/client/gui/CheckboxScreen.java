@@ -2,7 +2,10 @@ package com.drinfonty.checkbox.client.gui;
 
 import com.drinfonty.checkbox.CheckboxClient;
 import com.drinfonty.checkbox.config.CheckboxConfig;
+import com.drinfonty.checkbox.hud.EntryLabels;
 import com.drinfonty.checkbox.hud.HudColors;
+import com.drinfonty.checkbox.hud.HudLayoutCache;
+import com.drinfonty.checkbox.hud.TodoHudRenderer;
 import com.drinfonty.checkbox.model.CounterEntry;
 import com.drinfonty.checkbox.model.EntryMatch;
 import com.drinfonty.checkbox.model.EntryScope;
@@ -17,6 +20,7 @@ import net.minecraft.client.gui.components.ObjectSelectionList;
 import net.minecraft.client.gui.screens.ConfirmScreen;
 import net.minecraft.client.gui.screens.Screen;
 import net.minecraft.network.chat.Component;
+import net.minecraft.world.item.ItemStack;
 
 /**
  * The list manager (SPEC §4.1).
@@ -308,14 +312,23 @@ public class CheckboxScreen extends Screen {
 				int rgb = entry.isDone() ? HudColors.TEXT_DONE : HudColors.TEXT;
 
 				String prefix = entry.isDone() ? "[x] " : "[ ] ";
-				graphics.text(CheckboxScreen.this.font, prefix + entry.text(), x, y,
+				graphics.text(CheckboxScreen.this.font,
+						prefix + EntryLabels.plainLabelOf(entry), x, y,
 						HudColors.argb(rgb, 1f));
+
+				int right = getContentRight();
+				ItemStack icon = EntryLabels.iconOf(entry);
+				if (!icon.isEmpty()) {
+					TodoHudRenderer.drawIcon(graphics, icon,
+							right - HudLayoutCache.ICON_SIZE, y);
+					right -= HudLayoutCache.ICON_SIZE + HudLayoutCache.ICON_GAP;
+				}
 
 				String value = valueOf(entry);
 				if (!value.isEmpty()) {
 					int width = CheckboxScreen.this.font.width(value);
 					graphics.text(CheckboxScreen.this.font, value,
-							getContentRight() - width, y, HudColors.argb(HudColors.VALUE, 1f));
+							right - width, y, HudColors.argb(HudColors.VALUE, 1f));
 				}
 			}
 

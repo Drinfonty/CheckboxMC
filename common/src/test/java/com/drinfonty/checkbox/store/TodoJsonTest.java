@@ -149,6 +149,31 @@ class TodoJsonTest {
 	}
 
 	@Test
+	void autoLabelSurvivesARoundTripAndDefaultsOff() {
+		TodoList list = new TodoList();
+		CounterEntry auto = CounterEntry.create("Collect 8 Oak Log", EntryScope.WORLD, T0,
+				EntryMatch.item("oak_log"), 8, CounterEntry.CountMode.ACQUIRED);
+		auto.setAutoLabel(true);
+		CounterEntry manual = CounterEntry.create("My own words", EntryScope.WORLD, T0 + 1,
+				EntryMatch.item("stone"), 8, CounterEntry.CountMode.ACQUIRED);
+		list.add(auto);
+		list.add(manual);
+
+		TodoList reloaded = TodoJson.parse(TodoJson.write(list)).list();
+		assertTrue(((CounterEntry) reloaded.find(auto.id()).orElseThrow()).autoLabel());
+		assertFalse(((CounterEntry) reloaded.find(manual.id()).orElseThrow()).autoLabel());
+
+		// Entries written before the flag existed must load as manually labelled.
+		String legacy = """
+				{"entries":[{"type":"COUNTER","text":"old entry",
+				  "match":{"kind":"ITEM","id":"minecraft:stone"},"target":4}]}
+				""";
+		CounterEntry old = (CounterEntry) TodoJson.parse(legacy).list().entries().get(0);
+		assertFalse(old.autoLabel());
+		assertEquals("old entry", old.text());
+	}
+
+	@Test
 	void unresolvableRegistryIdsSurviveARoundTrip() {
 		// SPEC §2.2: an id the client cannot resolve is preserved, not deleted.
 		TodoList list = new TodoList();

@@ -8,11 +8,13 @@ import java.util.function.Predicate;
 import net.minecraft.core.Holder;
 import net.minecraft.core.registries.BuiltInRegistries;
 import net.minecraft.core.registries.Registries;
+import net.minecraft.network.chat.Component;
 import net.minecraft.resources.Identifier;
 import net.minecraft.tags.TagKey;
 import net.minecraft.world.entity.EntityType;
 import net.minecraft.world.item.Item;
 import net.minecraft.world.item.ItemStack;
+import net.minecraft.world.item.SpawnEggItem;
 
 /**
  * Resolves an {@link EntryMatch}'s stored registry id against the client's registries, and
@@ -63,6 +65,45 @@ public final class MatchResolver {
 	/** True if the id names something this client knows about, for greying out dead entries. */
 	public boolean isResolvable(EntryMatch match) {
 		return match != null && resolve(match) != UNRESOLVED;
+	}
+
+	/**
+	 * An icon for the entry: the item itself, or the mob's spawn egg for a kill counter.
+	 * Empty when nothing sensible resolves - tags name a set, not a thing.
+	 */
+	public ItemStack icon(EntryMatch match) {
+		if (match == null || match.kind().isTag()) {
+			return ItemStack.EMPTY;
+		}
+		Object resolved = resolve(match);
+		if (resolved == UNRESOLVED) {
+			return ItemStack.EMPTY;
+		}
+		if (match.kind() == EntryMatch.Kind.ITEM) {
+			return new ItemStack((Item) resolved);
+		}
+		return SpawnEggItem.byId((EntityType<?>) resolved)
+				.map(ItemStack::new)
+				.orElse(ItemStack.EMPTY);
+	}
+
+	/**
+	 * The translated name of whatever the entry tracks, for generated descriptions. Falls back
+	 * to the raw id so an entry for something this client lacks still reads sensibly.
+	 */
+	public Component displayName(EntryMatch match) {
+		if (match == null) {
+			return Component.empty();
+		}
+		Object resolved = resolve(match);
+		if (resolved == UNRESOLVED) {
+			return Component.literal(match.display());
+		}
+		return switch (match.kind()) {
+			case ITEM -> new ItemStack((Item) resolved).getHoverName();
+			case ENTITY -> ((EntityType<?>) resolved).getDescription();
+			default -> Component.literal(match.display());
+		};
 	}
 
 	public void clearCache() {

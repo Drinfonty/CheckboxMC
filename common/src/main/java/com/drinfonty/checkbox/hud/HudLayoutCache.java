@@ -9,6 +9,7 @@ import java.util.List;
 import net.minecraft.client.gui.Font;
 import net.minecraft.network.chat.Component;
 import net.minecraft.network.chat.Style;
+import net.minecraft.world.item.ItemStack;
 
 /**
  * Pre-formatted rows for the HUD, rebuilt only when something visible actually changes.
@@ -25,9 +26,22 @@ public final class HudLayoutCache {
 	/** Gap between an entry's label and its right-aligned value. */
 	public static final int LABEL_VALUE_GAP = 6;
 
+	/** Drawn beside the value; 8px so it sits inside a 9px text row. */
+	public static final int ICON_SIZE = 8;
+	public static final int ICON_GAP = 3;
+
 	public record Row(Component label, String value, int labelWidth, int valueWidth,
 			float fraction, boolean showBar, int rgb, long completedAt, boolean expiredTimer,
-			boolean done) {
+			boolean done, ItemStack icon) {
+
+		/** Width taken by the value and its icon, including the gap before them. */
+		public int trailingWidth() {
+			int width = value.isEmpty() ? 0 : valueWidth;
+			if (!icon.isEmpty()) {
+				width += (width > 0 ? ICON_GAP : 0) + ICON_SIZE;
+			}
+			return width;
+		}
 	}
 
 	private final List<Row> rows = new ArrayList<>();
@@ -88,8 +102,8 @@ public final class HudLayoutCache {
 			}
 			Row row = buildRow(font, config, entry, now);
 			rows.add(row);
-			width = Math.max(width, row.labelWidth()
-					+ (row.value().isEmpty() ? 0 : LABEL_VALUE_GAP + row.valueWidth()));
+			int trailing = row.trailingWidth();
+			width = Math.max(width, row.labelWidth() + (trailing > 0 ? LABEL_VALUE_GAP + trailing : 0));
 		}
 
 		if (overflow > 0) {
@@ -100,10 +114,11 @@ public final class HudLayoutCache {
 
 	private static Row buildRow(Font font, CheckboxConfig config, TodoEntry entry, long now) {
 		boolean done = entry.isDone();
-		String label = (done ? "[x] " : "[ ] ") + entry.text();
 
 		Style style = done ? Style.EMPTY.withStrikethrough(true) : Style.EMPTY;
-		Component component = Component.literal(label).withStyle(style);
+		Component component = Component.literal(done ? "[x] " : "[ ] ")
+				.append(EntryLabels.labelOf(entry))
+				.withStyle(style);
 
 		String value = "";
 		float fraction = 0f;
@@ -129,7 +144,7 @@ public final class HudLayoutCache {
 		}
 
 		return new Row(component, value, font.width(component), font.width(value), fraction,
-				showBar, rgb, entry.completedAt(), expiredTimer, done);
+				showBar, rgb, entry.completedAt(), expiredTimer, done, EntryLabels.iconOf(entry));
 	}
 
 	private static boolean isVisible(TodoEntry entry, CheckboxConfig config, long now) {

@@ -137,7 +137,7 @@ public final class TodoJson {
 				string(obj, "countMode", null), CounterEntry.CountMode.ACQUIRED);
 
 		return CounterEntry.restored(id, text, scope, createdAt, order, match, target, progress,
-				mode, completedAt);
+				mode, bool(obj, "autoLabel", false), completedAt);
 	}
 
 	private static TimerEntry parseTimer(JsonObject obj, UUID id, String text, EntryScope scope,
@@ -189,6 +189,9 @@ public final class TodoJson {
 				obj.addProperty("target", counter.target());
 				obj.addProperty("progress", counter.progress());
 				obj.addProperty("countMode", counter.countMode().name());
+				if (counter.autoLabel()) {
+					obj.addProperty("autoLabel", true);
+				}
 			}
 			case TimerEntry timer -> {
 				obj.addProperty("durationMillis", timer.durationMillis());

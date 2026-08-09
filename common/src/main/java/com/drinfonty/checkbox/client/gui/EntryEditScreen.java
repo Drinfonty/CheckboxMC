@@ -2,6 +2,7 @@ package com.drinfonty.checkbox.client.gui;
 
 import com.drinfonty.checkbox.CheckboxClient;
 import com.drinfonty.checkbox.config.CheckboxConfig;
+import com.drinfonty.checkbox.hud.EntryLabels;
 import com.drinfonty.checkbox.model.CounterEntry;
 import com.drinfonty.checkbox.model.EntryMatch;
 import com.drinfonty.checkbox.model.EntryScope;
@@ -64,7 +65,11 @@ public class EntryEditScreen extends Screen {
 		int x = (this.width - FIELD_WIDTH) / 2;
 		int y = 40;
 
-		this.textBox = field(x, y, "Description");
+		// Counters can describe themselves, so the field is optional there and the hint shows
+		// what will be used instead.
+		this.textBox = field(x, y, type == TodoEntry.Type.COUNTER
+				? "Description (optional)"
+				: "Description");
 		this.textBox.setMaxLength(TodoEntry.TEXT_MAX_LENGTH);
 		y += ROW + 6;
 
@@ -161,7 +166,10 @@ public class EntryEditScreen extends Screen {
 			return;
 		}
 
-		this.textBox.setValue(existing.text());
+		// An auto-labelled entry shows an empty field, so saving unchanged keeps it automatic.
+		if (!(existing instanceof CounterEntry counter && counter.autoLabel())) {
+			this.textBox.setValue(existing.text());
+		}
 		this.scope = existing.scope();
 		this.scopeButton.setMessage(Component.literal(scopeLabel()));
 
@@ -238,7 +246,7 @@ public class EntryEditScreen extends Screen {
 		if (textBox == null) {
 			return "Loading";
 		}
-		if (textBox.getValue().isBlank()) {
+		if (textBox.getValue().isBlank() && type != TodoEntry.Type.COUNTER) {
 			return "Give the entry a description";
 		}
 		if (!CheckboxClient.store().isOpen()) {
@@ -310,9 +318,20 @@ public class EntryEditScreen extends Screen {
 	private TodoEntry create(String text, long now) {
 		return switch (type) {
 			case TEXT -> TextEntry.create(text, scope, now);
-			case COUNTER -> CounterEntry.create(text, scope, now,
-					new EntryMatch(matchKind, idBox.getValue()), parseInt(targetBox.getValue()),
-					countMode);
+			case COUNTER -> {
+				boolean auto = text.isBlank();
+				CounterEntry counter = CounterEntry.create(
+						auto ? "Counter" : text, scope, now,
+						new EntryMatch(matchKind, idBox.getValue()),
+						parseInt(targetBox.getValue()), countMode);
+				if (auto) {
+					counter.setAutoLabel(true);
+					// Store the generated text too: a client that cannot resolve the id later
+					// still shows something better than "Counter".
+					counter.setText(EntryLabels.generate(counter).getString());
+				}
+				yield counter;
+			}
 			case TIMER -> {
 				TimerEntry timer = TimerEntry.create(text, scope, now, durationMillis());
 				if (startImmediately) {
@@ -324,7 +343,9 @@ public class EntryEditScreen extends Screen {
 	}
 
 	private void applyEdits(String text, long now) {
-		existing.setText(text);
+		if (!text.isBlank()) {
+			existing.setText(text);
+		}
 		if (existing.scope() != scope) {
 			// Moving scope means moving file, which only the store can do.
 			CheckboxClient.store().moveToScope(existing.id(), scope);
@@ -334,6 +355,12 @@ public class EntryEditScreen extends Screen {
 				counter.setMatch(new EntryMatch(matchKind, idBox.getValue()));
 				counter.setTarget(parseInt(targetBox.getValue()), now);
 				counter.setCountMode(countMode);
+				// Clearing the description hands the label back to the generator; typing one
+				// takes it back.
+				counter.setAutoLabel(text.isBlank());
+				if (text.isBlank()) {
+					counter.setText(EntryLabels.generate(counter).getString());
+				}
 			}
 			case TimerEntry timer -> timer.setDuration(durationMillis());
 			default -> {
