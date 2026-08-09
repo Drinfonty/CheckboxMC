@@ -12,6 +12,7 @@
 		"issues": "https://github.com/Drinfonty/CheckboxMC/issues"
 	},
 	"license": "CC0-1.0",
+	"icon": "assets/checkbox/icon.png",
 	"environment": "client",
 	"entrypoints": {
 		"client": [

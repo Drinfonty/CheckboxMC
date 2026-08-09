@@ -10,6 +10,7 @@ version="${modVersion}"
 displayName="Checkbox"
 description="A client-side todo list with automatic item, mob-kill and countdown tracking, shown on a customisable HUD."
 authors="Drinfonty"
+logoFile="assets/checkbox/icon.png"
 
 [[dependencies.checkbox]]
 modId="neoforge"
