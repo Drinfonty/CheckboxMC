@@ -198,7 +198,7 @@ public final class TodoJson {
 					obj.add("remainingMillis", null);
 				} else {
 					obj.add("endsAtEpochMillis", null);
-					obj.addProperty("remainingMillis", timer.remainingMillis(0L));
+					obj.addProperty("remainingMillis", timer.storedRemainingMillis());
 				}
 			}
 		}

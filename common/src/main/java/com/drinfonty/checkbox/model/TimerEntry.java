@@ -95,6 +95,14 @@ public final class TimerEntry extends TodoEntry {
 		return endsAtEpochMillis;
 	}
 
+	/**
+	 * The stored remaining time, meaningful only while not running. For the storage codec;
+	 * everything else wants {@link #remainingMillis(long)}, which is correct in every state.
+	 */
+	public long storedRemainingMillis() {
+		return remainingMillis;
+	}
+
 	/** Starts an idle timer, or resumes a paused one. No effect while running or expired. */
 	public void start(long nowMillis) {
 		if (state == State.RUNNING) {
