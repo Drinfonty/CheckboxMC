@@ -2,6 +2,7 @@ package com.drinfonty.checkbox.client.gui;
 
 import com.drinfonty.checkbox.CheckboxClient;
 import com.drinfonty.checkbox.config.CheckboxConfig;
+import com.drinfonty.checkbox.hud.CheckboxGlyph;
 import com.drinfonty.checkbox.hud.EntryLabels;
 import com.drinfonty.checkbox.hud.HudColors;
 import com.drinfonty.checkbox.hud.HudLayoutCache;
@@ -311,9 +312,11 @@ public class CheckboxScreen extends Screen {
 				int y = getContentY() + 2;
 				int rgb = entry.isDone() ? HudColors.TEXT_DONE : HudColors.TEXT;
 
-				String prefix = entry.isDone() ? "[x] " : "[ ] ";
-				graphics.text(CheckboxScreen.this.font,
-						prefix + EntryLabels.plainLabelOf(entry), x, y,
+				CheckboxGlyph.draw(graphics, x,
+						y + (CheckboxScreen.this.font.lineHeight - CheckboxGlyph.SCREEN_SIZE) / 2,
+						CheckboxGlyph.SCREEN_SIZE, entry.isDone(), 1f);
+				graphics.text(CheckboxScreen.this.font, EntryLabels.plainLabelOf(entry),
+						x + CheckboxGlyph.widthWithGap(CheckboxGlyph.SCREEN_SIZE), y,
 						HudColors.argb(rgb, 1f));
 
 				int right = getContentRight();

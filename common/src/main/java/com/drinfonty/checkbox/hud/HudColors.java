@@ -3,8 +3,13 @@ package com.drinfonty.checkbox.hud;
 /** RGB values for the HUD. Alpha is applied at draw time, so these are 24-bit. */
 public final class HudColors {
 	public static final int TEXT = 0xFFFFFF;
-	/** Bright enough to stay readable once a strikethrough runs through it. */
-	public static final int TEXT_DONE = 0xA6A6A6;
+	/**
+	 * Completed entries turn green rather than grey: finishing a tracked goal should read as
+	 * an achievement, not as a struck-off chore. Matches the tick and the mod icon.
+	 */
+	public static final int TEXT_DONE = 0x5ED65E;
+	public static final int CHECK = 0x5ED65E;
+	public static final int CHECKBOX_EMPTY = 0xB0B0B0;
 	public static final int TEXT_PAUSED = 0xB0B0B0;
 	public static final int TITLE = 0xFFAA00;
 	public static final int VALUE = 0xAAAAAA;

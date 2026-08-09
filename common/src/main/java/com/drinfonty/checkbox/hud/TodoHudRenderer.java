@@ -161,13 +161,14 @@ public final class TodoHudRenderer {
 	private void drawRow(GuiGraphicsExtractor graphics, Font font, CheckboxConfig config,
 			HudLayoutCache.Row row, int x, int y, int width, float alpha, long now) {
 		int rgb = row.expiredTimer() ? blinkColor(now) : row.rgb();
+		boolean shadow = config.textShadow;
 
-		// Completed rows drop the shadow. Minecraft's shadow is a second copy of the glyphs
-		// offset by a pixel, and it draws the strikethrough line again with them - on 9px grey
-		// text that is four competing lines per row and the label stops being readable.
-		boolean shadow = config.textShadow && !row.done();
+		// The checkbox leads the row; the label starts after it.
+		CheckboxGlyph.draw(graphics, x, y + (font.lineHeight - CheckboxGlyph.HUD_SIZE) / 2,
+				CheckboxGlyph.HUD_SIZE, row.done(), alpha);
+		int labelX = x + CheckboxGlyph.widthWithGap(CheckboxGlyph.HUD_SIZE);
 
-		graphics.text(font, row.label(), x, y, HudColors.argb(rgb, alpha), shadow);
+		graphics.text(font, row.label(), labelX, y, HudColors.argb(rgb, alpha), shadow);
 
 		// Laid out from the right edge inwards: icon last, then the value beside it.
 		int right = width - PADDING;
@@ -176,19 +177,24 @@ public final class TodoHudRenderer {
 			right -= HudLayoutCache.ICON_SIZE + HudLayoutCache.ICON_GAP;
 		}
 		if (!row.value().isEmpty()) {
+			// A finished counter's "8/8" goes green with its label, so the whole row reads as
+			// one completed thing rather than a green label beside a grey number.
+			int valueRgb = row.expiredTimer() || row.done() ? rgb : HudColors.VALUE;
 			graphics.text(font, Component.literal(row.value()), right - row.valueWidth(), y,
-					HudColors.argb(row.expiredTimer() ? rgb : HudColors.VALUE, alpha), shadow);
+					HudColors.argb(valueRgb, alpha), shadow);
 		}
 
 		if (row.showBar()) {
+			// Starts under the label rather than the checkbox, so the bars line up with the
+			// text column.
 			int barY = y + font.lineHeight + BAR_TOP_GAP;
 			int barRight = width - PADDING;
-			graphics.fill(x, barY, barRight, barY + BAR_HEIGHT,
+			graphics.fill(labelX, barY, barRight, barY + BAR_HEIGHT,
 					HudColors.argb(HudColors.BAR_TRACK, alpha));
-			int filled = Math.round((barRight - x) * Math.clamp(row.fraction(), 0f, 1f));
+			int filled = Math.round((barRight - labelX) * Math.clamp(row.fraction(), 0f, 1f));
 			if (filled > 0) {
 				int fill = row.fraction() >= 1f ? HudColors.BAR_FILL_DONE : HudColors.BAR_FILL;
-				graphics.fill(x, barY, x + filled, barY + BAR_HEIGHT,
+				graphics.fill(labelX, barY, labelX + filled, barY + BAR_HEIGHT,
 						HudColors.argb(fill, alpha));
 			}
 		}

@@ -8,7 +8,6 @@ import java.util.ArrayList;
 import java.util.List;
 import net.minecraft.client.gui.Font;
 import net.minecraft.network.chat.Component;
-import net.minecraft.network.chat.Style;
 import net.minecraft.world.item.ItemStack;
 
 /**
@@ -103,7 +102,8 @@ public final class HudLayoutCache {
 			Row row = buildRow(font, config, entry, now);
 			rows.add(row);
 			int trailing = row.trailingWidth();
-			width = Math.max(width, row.labelWidth() + (trailing > 0 ? LABEL_VALUE_GAP + trailing : 0));
+			width = Math.max(width, CheckboxGlyph.widthWithGap(CheckboxGlyph.HUD_SIZE)
+					+ row.labelWidth() + (trailing > 0 ? LABEL_VALUE_GAP + trailing : 0));
 		}
 
 		if (overflow > 0) {
@@ -115,10 +115,9 @@ public final class HudLayoutCache {
 	private static Row buildRow(Font font, CheckboxConfig config, TodoEntry entry, long now) {
 		boolean done = entry.isDone();
 
-		Style style = done ? Style.EMPTY.withStrikethrough(true) : Style.EMPTY;
-		Component component = Component.literal(done ? "[x] " : "[ ] ")
-				.append(EntryLabels.labelOf(entry))
-				.withStyle(style);
+		// No prefix and no strikethrough: the row is led by a drawn checkbox, and completion
+		// is carried by colour.
+		Component component = EntryLabels.labelOf(entry);
 
 		String value = "";
 		float fraction = 0f;

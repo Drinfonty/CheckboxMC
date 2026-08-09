@@ -179,9 +179,12 @@ Row format:
 [ ] Furnace batch            4:31
 ```
 
-* Incomplete entries use `[ ]`, complete use `[x]` plus strikethrough. Completed rows drop
-  the text shadow: Minecraft's shadow redraws the glyphs *and* the strikethrough a pixel
-  down, which makes 9px grey text unreadable.
+* Each row is led by a drawn checkbox: an empty square, or a green square with a tick once
+  complete. It is drawn rather than blitted from Minecraft's `widget/checkbox` sprites, which
+  are 20×20 with a 1px border and lose their bottom edge when sampled down to a 9px row.
+* Completed entries turn **green** — label, value and checkbox together — rather than being
+  greyed out or struck through. Finishing a tracked goal should read as an achievement, and
+  strikethrough on a 9px font is illegible anyway.
 * Counter rows MUST show `progress/target`; the bar is optional per `showProgressBar`.
 * Tracked rows SHOULD show an icon at the right edge — the item itself, the mob's spawn egg
   for a kill counter, and a clock for a timer, so the tracked types line up. Items draw at
