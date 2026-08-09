@@ -1,6 +1,7 @@
 package com.drinfonty.checkbox.track;
 
 import com.drinfonty.checkbox.Checkbox;
+import com.drinfonty.checkbox.config.CheckboxConfig;
 import com.drinfonty.checkbox.model.CounterEntry;
 import com.drinfonty.checkbox.model.EntryMatch;
 import com.drinfonty.checkbox.model.TimerEntry;
@@ -78,6 +79,7 @@ public final class TrackerManager {
 	 * that may resolve differently under another server's datapacks.
 	 */
 	public void reset() {
+		attribution.setWindowTicks(CheckboxConfig.get().killAttributionWindowTicks);
 		census.invalidate();
 		attribution.clear();
 		resolver.clearCache();

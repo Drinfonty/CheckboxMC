@@ -2,8 +2,11 @@ package com.drinfonty.checkbox.fabric;
 
 import com.drinfonty.checkbox.Checkbox;
 import com.drinfonty.checkbox.CheckboxClient;
+import com.drinfonty.checkbox.hud.TodoHudRenderer;
 import net.fabricmc.api.ClientModInitializer;
 import net.fabricmc.fabric.api.client.event.lifecycle.v1.ClientTickEvents;
+import net.fabricmc.fabric.api.client.rendering.v1.hud.HudElementRegistry;
+import net.fabricmc.fabric.api.client.rendering.v1.hud.VanillaHudElements;
 
 /**
  * Fabric registration glue. All behaviour lives in {@code :common}; this class only wires
@@ -14,5 +17,10 @@ public class CheckboxFabricClient implements ClientModInitializer {
 	public void onInitializeClient() {
 		Checkbox.init();
 		ClientTickEvents.END_CLIENT_TICK.register(CheckboxClient::onClientTick);
+
+		// Above chat, so the list sits over the HUD furniture without fighting the vanilla
+		// overlays for space. Where it actually appears is the player's choice anyway.
+		HudElementRegistry.attachElementAfter(VanillaHudElements.CHAT, Checkbox.id("todo_list"),
+				(graphics, deltaTracker) -> TodoHudRenderer.get().render(graphics, deltaTracker));
 	}
 }

@@ -1,5 +1,6 @@
 package com.drinfonty.checkbox;
 
+import com.drinfonty.checkbox.config.CheckboxConfig;
 import com.drinfonty.checkbox.store.ScopeResolver;
 import com.drinfonty.checkbox.store.StoreScope;
 import com.drinfonty.checkbox.store.TodoStore;
@@ -73,8 +74,10 @@ public final class CheckboxClient {
 
 	private static void leaveWorld() {
 		// SPEC §2.4: running timers freeze on the way out rather than burning down while the
-		// player is at the title screen.
-		TRACKERS.pauseTimers(System.currentTimeMillis());
+		// player is at the title screen - unless they asked for wall-clock timers.
+		if (CheckboxConfig.get().pauseTimersOnQuit) {
+			TRACKERS.pauseTimers(System.currentTimeMillis());
+		}
 		STORE.close();
 		TRACKERS.reset();
 		lastLevel = null;

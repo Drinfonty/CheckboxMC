@@ -21,7 +21,7 @@ public final class KillAttribution {
 	private static final long ABSENT = Long.MIN_VALUE;
 
 	private final Int2LongMap lastHitTick = new Int2LongOpenHashMap();
-	private final long windowTicks;
+	private long windowTicks;
 
 	public KillAttribution() {
 		this(DEFAULT_WINDOW_TICKS);
@@ -34,6 +34,10 @@ public final class KillAttribution {
 
 	public long windowTicks() {
 		return windowTicks;
+	}
+
+	public void setWindowTicks(long windowTicks) {
+		this.windowTicks = Math.max(1L, windowTicks);
 	}
 
 	public void record(int entityId, long nowTicks) {

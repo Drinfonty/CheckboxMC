@@ -1,6 +1,7 @@
 package com.drinfonty.checkbox.track;
 
 import com.drinfonty.checkbox.Checkbox;
+import com.drinfonty.checkbox.config.CheckboxConfig;
 import com.drinfonty.checkbox.model.TimerEntry;
 import java.util.HashSet;
 import java.util.List;
@@ -19,10 +20,6 @@ import net.minecraft.sounds.SoundEvents;
  * call it, and what a player should see when a timer runs out.
  */
 public final class TimerService {
-	// TODO: move to CheckboxConfig when it lands (SPEC §6 playSounds / showToasts).
-	private static final boolean PLAY_SOUNDS = true;
-	private static final boolean SHOW_TOASTS = true;
-
 	private static final SystemToast.SystemToastId TOAST_ID = new SystemToast.SystemToastId();
 
 	/** Timers this service paused because the game was paused, to resume on unpause. */
@@ -82,11 +79,12 @@ public final class TimerService {
 		if (Checkbox.DEBUG) {
 			Checkbox.LOGGER.info("Timer expired: {}", timer.text());
 		}
-		if (PLAY_SOUNDS) {
+		CheckboxConfig config = CheckboxConfig.get();
+		if (config.playSounds) {
 			minecraft.getSoundManager()
 					.play(SimpleSoundInstance.forUI(SoundEvents.UI_TOAST_CHALLENGE_COMPLETE, 1.0F));
 		}
-		if (SHOW_TOASTS) {
+		if (config.showToasts) {
 			SystemToast.add(minecraft.gui.toastManager(), TOAST_ID,
 					Component.literal("Checkbox"), Component.literal(timer.text()));
 		}
