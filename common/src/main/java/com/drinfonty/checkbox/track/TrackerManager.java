@@ -112,6 +112,9 @@ public final class TrackerManager {
 					Checkbox.LOGGER.info("Credited kill of {} to '{}' ({}/{})",
 							EntityType.getKey(type), entry.text(), entry.progress(), entry.target());
 				}
+				if (entry.isDone()) {
+					Notifications.entryCompleted(entry);
+				}
 			}
 		}
 	}
@@ -135,6 +138,9 @@ public final class TrackerManager {
 					&& !entry.isDone()
 					&& resolver.matches(entry.match(), stack)) {
 				entry.addProgress(amount, now);
+				if (entry.isDone()) {
+					Notifications.entryCompleted(entry);
+				}
 			}
 		}
 	}
@@ -165,7 +171,8 @@ public final class TrackerManager {
 			}
 		}
 
-		census.update(itemScratch, entry -> countScratch.getOrDefault(entry.id(), 0), nowMillis);
+		census.update(itemScratch, entry -> countScratch.getOrDefault(entry.id(), 0), nowMillis,
+				Notifications::entryCompleted);
 	}
 
 	private void collectTimers() {

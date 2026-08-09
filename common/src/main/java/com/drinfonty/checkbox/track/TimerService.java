@@ -1,17 +1,12 @@
 package com.drinfonty.checkbox.track;
 
 import com.drinfonty.checkbox.Checkbox;
-import com.drinfonty.checkbox.config.CheckboxConfig;
 import com.drinfonty.checkbox.model.TimerEntry;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
 import java.util.UUID;
 import net.minecraft.client.Minecraft;
-import net.minecraft.client.gui.components.toasts.SystemToast;
-import net.minecraft.client.resources.sounds.SimpleSoundInstance;
-import net.minecraft.network.chat.Component;
-import net.minecraft.sounds.SoundEvents;
 
 /**
  * Drives countdowns and announces expiry (DESIGN §7).
@@ -20,8 +15,6 @@ import net.minecraft.sounds.SoundEvents;
  * call it, and what a player should see when a timer runs out.
  */
 public final class TimerService {
-	private static final SystemToast.SystemToastId TOAST_ID = new SystemToast.SystemToastId();
-
 	/** Timers this service paused because the game was paused, to resume on unpause. */
 	private final Set<UUID> autoPaused = new HashSet<>();
 
@@ -46,7 +39,7 @@ public final class TimerService {
 		for (TimerEntry timer : timers) {
 			if (timer.update(nowMillis) && !timer.isNotified()) {
 				timer.setNotified(true);
-				announce(minecraft, timer);
+				announce(timer);
 			}
 		}
 	}
@@ -75,18 +68,7 @@ public final class TimerService {
 		autoPaused.clear();
 	}
 
-	private void announce(Minecraft minecraft, TimerEntry timer) {
-		if (Checkbox.DEBUG) {
-			Checkbox.LOGGER.info("Timer expired: {}", timer.text());
-		}
-		CheckboxConfig config = CheckboxConfig.get();
-		if (config.playSounds) {
-			minecraft.getSoundManager()
-					.play(SimpleSoundInstance.forUI(SoundEvents.UI_TOAST_CHALLENGE_COMPLETE, 1.0F));
-		}
-		if (config.showToasts) {
-			SystemToast.add(minecraft.gui.toastManager(), TOAST_ID,
-					Component.literal("Checkbox"), Component.literal(timer.text()));
-		}
+	private void announce(TimerEntry timer) {
+		Notifications.timerExpired(timer);
 	}
 }

@@ -101,8 +101,13 @@ position in the list, and a storage `scope`.
 ### 2.5 Completion
 
 * A counter entry MUST become `done` the moment `progress >= target`.
-* On completion (any type) the mod MUST play the completion sound (unless muted) and MAY show
-  a toast.
+* On **automatic** completion the mod MUST play a sound (unless muted) and show a toast:
+  * counters reaching their target → `block.note_block.pling`
+  * timers running out → `entity.player.levelup`
+* Ticking an entry off by hand in the manager MUST NOT announce — the click is its own
+  feedback.
+* An entry that is already satisfied the first time it is measured MUST NOT announce. Logging
+  in holding enough for an `INVENTORY` entry is not an achievement.
 * Completed entries are rendered struck-through and, per `completedBehaviour`, either fade
   off the HUD after `completedFadeSeconds` (default) or remain until cleared.
 * Completed entries MUST remain in the manager screen until removed or `Clear completed` is

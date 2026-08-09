@@ -7,6 +7,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 import java.util.UUID;
+import java.util.function.Consumer;
 import java.util.function.ToIntFunction;
 
 /**
@@ -28,8 +29,14 @@ public final class ItemCensus {
 	 * @param countOf    current inventory count for an entry
 	 * @param nowMillis  wall clock, for completion timestamps
 	 */
+	/**
+	 * @param onCompleted called for an entry that this census pushed over its target, so the
+	 *                    caller can announce it. Never called on an entry's first sighting -
+	 *                    an INVENTORY entry already satisfied when you log in has not just
+	 *                    been achieved.
+	 */
 	public void update(List<CounterEntry> entries, ToIntFunction<CounterEntry> countOf,
-			long nowMillis) {
+			long nowMillis, Consumer<CounterEntry> onCompleted) {
 		Set<UUID> live = new HashSet<>(entries.size());
 
 		for (CounterEntry entry : entries) {
@@ -42,10 +49,14 @@ public final class ItemCensus {
 			live.add(id);
 			int count = Math.max(0, countOf.applyAsInt(entry));
 			Integer previous = lastCounts.put(id, count);
+			boolean wasDone = entry.isDone();
 
 			if (entry.countMode() == CounterEntry.CountMode.INVENTORY) {
 				// Mirrors what is held, including on the very first census.
 				entry.setProgress(count, nowMillis);
+				if (previous != null && !wasDone && entry.isDone()) {
+					onCompleted.accept(entry);
+				}
 				continue;
 			}
 
@@ -56,6 +67,9 @@ public final class ItemCensus {
 			int delta = count - previous;
 			if (delta > 0) {
 				entry.addProgress(delta, nowMillis);
+				if (!wasDone && entry.isDone()) {
+					onCompleted.accept(entry);
+				}
 			}
 		}
 

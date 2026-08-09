@@ -7,6 +7,7 @@ import static org.junit.jupiter.api.Assertions.assertTrue;
 import com.drinfonty.checkbox.model.CounterEntry;
 import com.drinfonty.checkbox.model.EntryMatch;
 import com.drinfonty.checkbox.model.EntryScope;
+import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -28,8 +29,12 @@ class ItemCensusTest {
 		counts.put(entry.id(), amount);
 	}
 
+	/** Entries the last census reported as newly complete. */
+	private final List<CounterEntry> completed = new ArrayList<>();
+
 	private void census(ItemCensus census, List<CounterEntry> entries) {
-		census.update(entries, e -> counts.getOrDefault(e.id(), 0), T0);
+		completed.clear();
+		census.update(entries, e -> counts.getOrDefault(e.id(), 0), T0, completed::add);
 	}
 
 	@Test
@@ -152,6 +157,49 @@ class ItemCensusTest {
 
 		census(census, List.of());
 		assertFalse(census.hasBaselineFor(entry.id()));
+	}
+
+	@Test
+	void completionIsReportedOnceWhenTheTargetIsReached() {
+		ItemCensus census = new ItemCensus();
+		CounterEntry entry = entry(CounterEntry.CountMode.ACQUIRED, 8);
+		List<CounterEntry> entries = List.of(entry);
+
+		hold(entry, 0);
+		census(census, entries);
+		assertTrue(completed.isEmpty());
+
+		hold(entry, 4);
+		census(census, entries);
+		assertTrue(completed.isEmpty(), "partial progress is not a completion");
+
+		hold(entry, 8);
+		census(census, entries);
+		assertEquals(List.of(entry), completed);
+
+		hold(entry, 20);
+		census(census, entries);
+		assertTrue(completed.isEmpty(), "an already-complete entry must not announce again");
+	}
+
+	@Test
+	void anAlreadySatisfiedInventoryEntryDoesNotAnnounceOnFirstSight() {
+		// Logging in holding enough is not an achievement worth a chime.
+		ItemCensus census = new ItemCensus();
+		CounterEntry entry = entry(CounterEntry.CountMode.INVENTORY, 8);
+		List<CounterEntry> entries = List.of(entry);
+
+		hold(entry, 32);
+		census(census, entries);
+		assertTrue(entry.isDone());
+		assertTrue(completed.isEmpty());
+
+		// Dropping below and climbing back is a real transition, so that does announce.
+		hold(entry, 2);
+		census(census, entries);
+		hold(entry, 8);
+		census(census, entries);
+		assertEquals(List.of(entry), completed);
 	}
 
 	@Test
