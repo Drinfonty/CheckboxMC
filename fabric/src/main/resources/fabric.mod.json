@@ -16,6 +16,9 @@
 	"entrypoints": {
 		"client": [
 			"com.drinfonty.checkbox.fabric.CheckboxFabricClient"
+		],
+		"modmenu": [
+			"com.drinfonty.checkbox.client.integration.ModMenuIntegration"
 		]
 	},
 	"mixins": [

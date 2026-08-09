@@ -1,5 +1,6 @@
 package com.drinfonty.checkbox;
 
+import com.drinfonty.checkbox.client.CheckboxKeys;
 import com.drinfonty.checkbox.config.CheckboxConfig;
 import com.drinfonty.checkbox.store.ScopeResolver;
 import com.drinfonty.checkbox.store.StoreScope;
@@ -38,6 +39,8 @@ public final class CheckboxClient {
 	}
 
 	public static void onClientTick(Minecraft minecraft) {
+		CheckboxKeys.handle(minecraft);
+
 		ClientLevel level = minecraft.level;
 		if (level == null) {
 			if (STORE.isOpen()) {

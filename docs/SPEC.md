@@ -222,11 +222,13 @@ Registered under a Checkbox category (`checkbox:main`).
 
 | Action | Translation key | Default |
 | :--- | :--- | :--- |
-| Open Checkbox | `key.checkbox.open` | `K` |
+| Open Checkbox | `key.checkbox.open` | `+` (the `=` key) |
 | Toggle HUD | `key.checkbox.toggle_hud` | `J` |
 | Quick-add held item (v1.1) | `key.checkbox.quick_add` | unbound |
 
-Both defaults are unused by vanilla. Key presses MUST be consumed via `consumeClick()` in the
+Both defaults are unused by vanilla. Minecraft binds physical keys and cannot express a
+modifier as part of a binding, so "Open Checkbox" is the `=` key and fires whether or not
+shift is held. Key presses MUST be consumed via `consumeClick()` in the
 client tick and MUST be ignored while a screen is open.
 
 ---

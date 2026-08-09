@@ -2,6 +2,8 @@ package com.drinfonty.checkbox.neoforge;
 
 import com.drinfonty.checkbox.Checkbox;
 import com.drinfonty.checkbox.CheckboxClient;
+import com.drinfonty.checkbox.client.CheckboxKeys;
+import com.drinfonty.checkbox.client.gui.CheckboxScreen;
 import com.drinfonty.checkbox.hud.TodoHudRenderer;
 import net.minecraft.client.Minecraft;
 import net.neoforged.api.distmarker.Dist;
@@ -11,6 +13,8 @@ import net.neoforged.fml.common.Mod;
 import net.neoforged.fml.loading.FMLEnvironment;
 import net.neoforged.neoforge.client.event.ClientTickEvent;
 import net.neoforged.neoforge.client.event.RegisterGuiLayersEvent;
+import net.neoforged.neoforge.client.event.RegisterKeyMappingsEvent;
+import net.neoforged.neoforge.client.gui.IConfigScreenFactory;
 import net.neoforged.neoforge.client.gui.VanillaGuiLayers;
 import net.neoforged.neoforge.common.NeoForge;
 
@@ -28,7 +32,16 @@ public class CheckboxNeoForge {
 			Checkbox.init();
 			NeoForge.EVENT_BUS.addListener(CheckboxNeoForge::onClientTick);
 			modBus.addListener(CheckboxNeoForge::onRegisterGuiLayers);
+			modBus.addListener(CheckboxNeoForge::onRegisterKeyMappings);
+			container.registerExtensionPoint(IConfigScreenFactory.class,
+					(mc, parent) -> new CheckboxScreen(parent));
 		}
+	}
+
+	private static void onRegisterKeyMappings(RegisterKeyMappingsEvent event) {
+		event.registerCategory(CheckboxKeys.CATEGORY);
+		event.register(CheckboxKeys.OPEN);
+		event.register(CheckboxKeys.TOGGLE_HUD);
 	}
 
 	private static void onClientTick(ClientTickEvent.Post event) {
