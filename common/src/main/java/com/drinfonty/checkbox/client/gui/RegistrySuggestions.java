@@ -80,8 +80,8 @@ public final class RegistrySuggestions {
 	 * Whether an entity type is something a kill counter could ever credit.
 	 *
 	 * <p>Tested by whether the type has living-entity attributes, which only a
-	 * {@code LivingEntity} does - so this is exactly the set kill detection can see, since it
-	 * keys off {@code LivingEntity.deathTime}.
+	 * {@code LivingEntity} does - and only a {@code LivingEntity} produces the death event
+	 * kill detection listens for, so this is exactly the set that can be tracked.
 	 *
 	 * <p>Two tempting alternatives are both wrong. {@code EntityType.getBaseClass()} is a stub
 	 * in 26.2 that returns {@code Entity.class} for every type, so a class test silently

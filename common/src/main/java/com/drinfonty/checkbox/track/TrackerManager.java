@@ -34,7 +34,8 @@ public final class TrackerManager {
 
 	private final TodoStore store;
 	private final ItemCensus census = new ItemCensus();
-	private final KillAttribution attribution = new KillAttribution();
+	/** Payload is the victim's type, captured on the hit rather than looked up at death. */
+	private final KillAttribution<EntityType<?>> attribution = new KillAttribution<>();
 	private final MatchResolver resolver = new MatchResolver();
 	private final TimerService timers = new TimerService();
 
@@ -91,24 +92,47 @@ public final class TrackerManager {
 		census.invalidate();
 	}
 
-	/** From {@code ClientboundDamageEventPacket}: the local player damaged something. */
-	public void onLocalPlayerDamaged(int victimEntityId) {
-		attribution.record(victimEntityId, tickCounter);
+	/**
+	 * From {@code ClientboundDamageEventPacket}: the local player damaged something.
+	 *
+	 * @param victimType the victim's type, remembered now because the entity may be gone by
+	 *                   the time it dies
+	 */
+	public void onLocalPlayerDamaged(int victimEntityId, EntityType<?> victimType) {
+		attribution.record(victimEntityId, tickCounter, victimType);
+		if (Checkbox.debug()) {
+			Checkbox.LOGGER.info("Damaged entity {} ({}), attribution records: {}",
+					victimEntityId, victimType == null ? "unknown type" : EntityType.getKey(victimType),
+					attribution.size());
+		}
 	}
 
-	/** From {@code LivingEntity#tick} on the first tick of the death animation. */
-	public void onEntityDeath(LivingEntity entity) {
-		if (!store.isOpen() || !attribution.consume(entity.getId(), tickCounter)) {
+	/**
+	 * A tracked entity died, reported from the death packet.
+	 *
+	 * <p>Takes an id, not an entity: what the victim was is recalled from the hit that killed
+	 * it, so nothing here depends on the mob still existing. Death-effect mods routinely
+	 * remove it first.
+	 */
+	public void onEntityDeath(int entityId) {
+		if (!store.isOpen()) {
+			return;
+		}
+		EntityType<?> type = attribution.consume(entityId, tickCounter);
+		if (Checkbox.debug()) {
+			Checkbox.LOGGER.info("Death of entity {}: attributedToUs={} ({})", entityId,
+					type != null, type == null ? "-" : EntityType.getKey(type));
+		}
+		if (type == null) {
 			return;
 		}
 
-		EntityType<?> type = entity.getType();
 		long now = System.currentTimeMillis();
 		collectCounters(killScratch, false);
 		for (CounterEntry entry : killScratch) {
 			if (!entry.isDone() && resolver.matches(entry.match(), type)) {
 				entry.addProgress(1, now);
-				if (Checkbox.DEBUG) {
+				if (Checkbox.debug()) {
 					Checkbox.LOGGER.info("Credited kill of {} to '{}' ({}/{})",
 							EntityType.getKey(type), entry.text(), entry.progress(), entry.target());
 				}
@@ -121,7 +145,7 @@ public final class TrackerManager {
 
 	/** From {@code ClientboundTakeItemEntityPacket}: the player picked something off the ground. */
 	public void onItemPickedUp(ItemStack stack, int amount) {
-		if (Checkbox.DEBUG) {
+		if (Checkbox.debug()) {
 			// Logged before the guards: this is the only evidence that the mixin capturing
 			// the picked-up stack fired at all, which is otherwise invisible until some
 			// PICKED_UP entry happens to match.

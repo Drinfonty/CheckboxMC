@@ -46,7 +46,7 @@ public final class Notifications {
 			return;
 		}
 		CheckboxConfig config = CheckboxConfig.get();
-		if (Checkbox.DEBUG) {
+		if (Checkbox.debug()) {
 			Checkbox.LOGGER.info("{}: {}", title.getString(), message.getString());
 		}
 		if (config.playSounds) {

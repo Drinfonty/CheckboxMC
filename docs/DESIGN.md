@@ -87,7 +87,7 @@ Checkbox/
 
 ```
 checkbox/
-├── Checkbox.java                  # MOD_ID, LOGGER, DEBUG flag, id(String)
+├── Checkbox.java                  # MOD_ID, LOGGER, debug(), id(String)
 ├── CheckboxClient.java            # client lifecycle facade the loaders call into
 ├── model/
 │   ├── TodoEntry.java             # sealed abstract base: id, text, order, scope, dirty
@@ -107,8 +107,10 @@ checkbox/
 ├── track/
 │   ├── TrackerManager.java        # tick entry point, routes events to entries
 │   ├── ItemCensus.java            # inventory snapshot/diff for ACQUIRED & INVENTORY
-│   ├── KillAttribution.java       # entityId -> last damage by local player + timestamp
-│   └── TimerService.java          # countdown ticking, pause handling, expiry
+│   ├── KillAttribution.java       # entityId -> (tick, victim type) from the last hit
+│   ├── TimerService.java          # countdown ticking, pause handling, expiry
+│   ├── Notifications.java         # completion toast + sound
+│   └── MatchResolver.java         # registry lookups, cached per world
 ├── hud/
 │   ├── TodoHudRenderer.java       # the ONLY class that draws the HUD
 │   ├── HudAnchor.java             # 9 anchors -> (x,y) resolution
@@ -119,8 +121,8 @@ checkbox/
 │   ├── HudSettingsScreen.java     # appearance settings
 │   └── HudPositionScreen.java     # drag-to-place editor
 └── client/mixin/
-    ├── ClientPacketListenerMixin.java
-    └── LivingEntityMixin.java
+    ├── ClientPacketListenerMixin.java   # damage, death and pickup packets
+    └── EntityEventPacketAccessor.java   # the death packet's entity id
 ```
 
 ### Why "everything in `:common`"
@@ -240,26 +242,38 @@ bundled by both Loom and NeoForge ModDev on 26.2.
 
 ### 5.2 Mob kill tracking
 
-Two signals, combined:
+Two signals, both from packets:
 
 1. **Attribution** — a mixin on `ClientPacketListener#handleDamageEvent` (`TAIL`, i.e. past
    the thread guard). `ClientboundDamageEventPacket` carries `entityId`, `sourceCauseId` and
    `sourceDirectId`; when either source id equals the local player's entity id,
-   `KillAttribution` records `entityId → (gameTime, cause)`. Because `sourceCauseId` is the
+   `KillAttribution` records `entityId → (tick, victim type)`. Because `sourceCauseId` is the
    *causing* entity, an arrow or a splash potion attributes to the player who fired it, not
    to the projectile. This is the same data the vanilla death-message system uses.
-2. **Death** — a mixin on `LivingEntity#tick` (`HEAD`) firing when `deathTime == 1`, the
-   first tick of the death animation. This is the same edge-detection pattern RedFX already
-   uses successfully for `hurtTime` on 26.2.
+2. **Death** — a mixin on `ClientPacketListener#handleEntityEvent` for `EntityEvent.DEATH`,
+   injected immediately after Minecraft's thread guard.
 
-A kill is credited when a tracked entity type reaches `deathTime == 1` **and** an attribution
-record for it exists within the last 200 ticks (10 s, configurable). Records are pruned on a
-timer and on level unload.
+A kill is credited when a death arrives for an entity with an attribution record inside the
+window (200 ticks / 10 s, configurable). Records are pruned on a timer and on level unload.
 
-Why not simpler alternatives:
+**Nothing depends on client-side animation, and this is deliberate.** The first implementation
+detected deaths by edge-detecting `deathTime == 1` — the first tick of the death animation —
+which works in a vanilla client and fails silently in a modded one: a ragdoll mod replaces the
+death effect and removes the dying mob, so the animation never runs. It cost a long debugging
+session in a real 226-mod client. Animation and rendering state are the parts of the client
+most likely to be replaced by other mods; packets are not.
+
+The same reasoning shapes two smaller details:
+
+* The victim's **type is recorded when the hit lands**, not looked up when it dies, because by
+  then the mob may be gone. Crediting needs only an entity id afterwards.
+* The death hook reads that id **straight off the packet** via an accessor mixin, since
+  `getEntity(Level)` resolves against the level and returns null once the mob is removed.
+
+Why not other alternatives:
 
 * *Chat death messages* — vanilla emits none for mobs.
-* *`LivingEntity#die`* — the client only reaches it via entity events, and not on every path.
+* *`LivingEntity#die`* — client-side, mods cancel it; that is the animation path by another name.
 * *"Nearest mob that died"* — miscounts badly in group PvE and with iron golems/wolves.
 
 ### 5.3 Optional stat reconciliation (v1.1, default off)

@@ -117,7 +117,7 @@ public final class MatchResolver {
 	private static Object lookup(EntryMatch match) {
 		Identifier id = Identifier.tryParse(match.id());
 		if (id == null) {
-			if (Checkbox.DEBUG) {
+			if (Checkbox.debug()) {
 				Checkbox.LOGGER.warn("Checkbox entry has an unparseable id: {}", match.id());
 			}
 			return UNRESOLVED;

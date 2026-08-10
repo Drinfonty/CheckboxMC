@@ -16,7 +16,18 @@ public class Checkbox {
 	 * fire on every damage event and inventory census, and their arguments are not free to
 	 * compute. Being {@code static final}, the JIT folds the branch away when disabled.
 	 */
-	public static final boolean DEBUG = Boolean.getBoolean("checkbox.debug");
+	private static final boolean DEBUG_PROPERTY = Boolean.getBoolean("checkbox.debug");
+
+	/**
+	 * Whether to emit tracker diagnostics.
+	 *
+	 * <p>Also switchable from the config file, because the system property means editing JVM
+	 * arguments in a launcher - which is exactly the wrong amount of friction when someone is
+	 * trying to work out why tracking is not firing for them.
+	 */
+	public static boolean debug() {
+		return DEBUG_PROPERTY || com.drinfonty.checkbox.config.CheckboxConfig.get().debugLogging;
+	}
 
 	public static void init() {
 		LOGGER.info("Initializing Checkbox client!");

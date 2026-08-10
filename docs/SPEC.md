@@ -72,12 +72,16 @@ position in the list, and a storage `scope`.
 
 * Example: *"Kill 10 zombies"* → `match = ENTITY minecraft:zombie`, `target = 10`.
 * A kill MUST be credited when **both** hold:
-  1. A `LivingEntity` of the matching type reaches `deathTime == 1` client-side.
+  1. A death arrives for that entity — `ClientboundEntityEventPacket` with `EntityEvent.DEATH`.
   2. The local player is recorded as the damage cause for that entity within the
      **attribution window** (default 200 ticks / 10 s), from
      `ClientboundDamageEventPacket.sourceCauseId()` or `sourceDirectId()`.
 * Projectile and thrown-potion kills MUST attribute to the player, not the projectile
   (`sourceCauseId` carries the shooter).
+* Detection MUST NOT depend on client-side animation or rendering state. Those are the parts
+  of the client other mods most often replace — a ragdoll mod removes the dying mob, and an
+  animation-based check then never fires. The victim's type MUST therefore be recorded when
+  the hit lands, so crediting the kill afterwards needs nothing but an entity id.
 * Attribution records MUST be pruned when they exceed the window and on level unload.
 * Kills by other players, by mobs, or from causes the local player did not contribute to
   MUST NOT be counted.

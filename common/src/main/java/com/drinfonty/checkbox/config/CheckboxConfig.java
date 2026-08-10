@@ -75,6 +75,8 @@ public class CheckboxConfig {
 	public int killAttributionWindowTicks = 200;
 	public boolean pauseTimersOnQuit = true;
 	public boolean statReconciliation = false;
+	/** Writes tracker diagnostics to the game log, for working out why something is not counting. */
+	public boolean debugLogging = false;
 
 	/** Overridable for tests. */
 	public static void setConfigDir(Path dir) {

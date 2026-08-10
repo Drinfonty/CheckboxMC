@@ -10,7 +10,7 @@ import java.nio.file.Path;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.multiplayer.ClientLevel;
 import net.minecraft.client.player.LocalPlayer;
-import net.minecraft.world.entity.LivingEntity;
+import net.minecraft.world.entity.EntityType;
 import net.minecraft.world.item.ItemStack;
 
 /**
@@ -85,19 +85,19 @@ public final class CheckboxClient {
 		TRACKERS.reset();
 		lastLevel = null;
 		lastPlayer = null;
-		if (Checkbox.DEBUG) {
+		if (Checkbox.debug()) {
 			Checkbox.LOGGER.info("Left world; Checkbox lists saved and closed");
 		}
 	}
 
 	// --- Signals from the mixins -------------------------------------------------------
 
-	public static void onLocalPlayerDamaged(int victimEntityId) {
-		TRACKERS.onLocalPlayerDamaged(victimEntityId);
+	public static void onLocalPlayerDamaged(int victimEntityId, EntityType<?> victimType) {
+		TRACKERS.onLocalPlayerDamaged(victimEntityId, victimType);
 	}
 
-	public static void onEntityDeath(LivingEntity entity) {
-		TRACKERS.onEntityDeath(entity);
+	public static void onEntityDeath(int entityId) {
+		TRACKERS.onEntityDeath(entityId);
 	}
 
 	public static void onItemPickedUp(ItemStack stack, int amount) {

@@ -74,7 +74,7 @@ public final class TodoStore {
 		this.open = true;
 		this.lastFlushMillis = clock.getAsLong();
 
-		if (Checkbox.DEBUG) {
+		if (Checkbox.debug()) {
 			Checkbox.LOGGER.info("Opened Checkbox lists: {} ({} entries), global ({} entries)",
 					worldScope, worldList.size(), globalList.size());
 		}
@@ -239,7 +239,7 @@ public final class TodoStore {
 				Files.move(temp, file, StandardCopyOption.REPLACE_EXISTING);
 			}
 			list.clearDirty();
-			if (Checkbox.DEBUG) {
+			if (Checkbox.debug()) {
 				Checkbox.LOGGER.info("Saved Checkbox list {} ({} entries)", scope, list.size());
 			}
 		} catch (IOException e) {
