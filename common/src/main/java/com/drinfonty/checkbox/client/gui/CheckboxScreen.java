@@ -20,7 +20,10 @@ import net.minecraft.client.gui.components.Button;
 import net.minecraft.client.gui.components.ObjectSelectionList;
 import net.minecraft.client.gui.screens.ConfirmScreen;
 import net.minecraft.client.gui.screens.Screen;
+import net.minecraft.client.input.MouseButtonEvent;
+import net.minecraft.client.resources.sounds.SimpleSoundInstance;
 import net.minecraft.network.chat.Component;
+import net.minecraft.sounds.SoundEvents;
 import net.minecraft.world.item.ItemStack;
 
 /**
@@ -305,6 +308,45 @@ public class CheckboxScreen extends Screen {
 				return Component.literal(entry.text());
 			}
 
+			/** Where the checkbox is drawn. Shared with the hit test so the two cannot drift. */
+			private int glyphX() {
+				return getContentX();
+			}
+
+			private int glyphY() {
+				return getContentY() + 2
+						+ (CheckboxScreen.this.font.lineHeight - CheckboxGlyph.SCREEN_SIZE) / 2;
+			}
+
+			/**
+			 * A 9px box is a small target, so the clickable area is padded a couple of pixels
+			 * beyond what is drawn.
+			 */
+			private boolean overCheckbox(double mouseX, double mouseY) {
+				int pad = 2;
+				return mouseX >= glyphX() - pad
+						&& mouseX < glyphX() + CheckboxGlyph.SCREEN_SIZE + pad
+						&& mouseY >= glyphY() - pad
+						&& mouseY < glyphY() + CheckboxGlyph.SCREEN_SIZE + pad;
+			}
+
+			/** Only manual entries tick by hand; the rest are driven by what you do in game. */
+			private boolean clickToToggle() {
+				return entry instanceof TextEntry;
+			}
+
+			@Override
+			public boolean mouseClicked(MouseButtonEvent event, boolean doubleClick) {
+				if (clickToToggle() && overCheckbox(event.x(), event.y())) {
+					((TextEntry) entry).toggle(System.currentTimeMillis());
+					CheckboxScreen.this.minecraft.getSoundManager().play(
+							SimpleSoundInstance.forUI(SoundEvents.UI_BUTTON_CLICK, 1.0F));
+					CheckboxScreen.this.rebuild(entry);
+					return true;
+				}
+				return super.mouseClicked(event, doubleClick);
+			}
+
 			@Override
 			public void extractContent(GuiGraphicsExtractor graphics, int mouseX, int mouseY,
 					boolean hovered, float partialTick) {
@@ -312,9 +354,9 @@ public class CheckboxScreen extends Screen {
 				int y = getContentY() + 2;
 				int rgb = entry.isDone() ? HudColors.TEXT_DONE : HudColors.TEXT;
 
-				CheckboxGlyph.draw(graphics, x,
-						y + (CheckboxScreen.this.font.lineHeight - CheckboxGlyph.SCREEN_SIZE) / 2,
-						CheckboxGlyph.SCREEN_SIZE, entry.isDone(), 1f);
+				CheckboxGlyph.draw(graphics, glyphX(), glyphY(), CheckboxGlyph.SCREEN_SIZE,
+						entry.isDone(), 1f,
+						clickToToggle() && overCheckbox(mouseX, mouseY));
 				graphics.text(CheckboxScreen.this.font, EntryLabels.plainLabelOf(entry),
 						x + CheckboxGlyph.widthWithGap(CheckboxGlyph.SCREEN_SIZE), y,
 						HudColors.argb(rgb, 1f));

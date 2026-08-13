@@ -210,6 +210,12 @@ completed ones when `showCompleted` is enabled.
 
 * Scrollable list of the active scope's entries. Each row exposes: toggle done (text
   entries), edit, move up, move down, delete.
+* Clicking a **text entry's checkbox** MUST toggle it directly, without selecting the row
+  first — ticking something off is the most common action in the list and should not need two
+  steps. The box brightens under the cursor to show it is clickable, and the hit area is
+  padded slightly beyond the drawn box. Counters and timers do not toggle this way: their
+  state comes from what the player does in game, and the footer's Toggle covers the rare case
+  of overriding it.
 * Footer actions: `Add Text`, `Add Counter (Item)`, `Add Counter (Kill)`, `Add Timer`,
   `HUD Settings`, `Show/Hide HUD`, `Clear Completed`, `Done`.
 * Deleting an entry MUST require no confirmation for a single entry; `Clear Completed` MUST

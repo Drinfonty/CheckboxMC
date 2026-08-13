@@ -28,7 +28,15 @@ public final class CheckboxGlyph {
 
 	public static void draw(GuiGraphicsExtractor graphics, int x, int y, int size, boolean done,
 			float alpha) {
-		int colour = done ? HudColors.CHECK : HudColors.CHECKBOX_EMPTY;
+		draw(graphics, x, y, size, done, alpha, false);
+	}
+
+	/** @param highlight brightens an empty box, to show it can be clicked */
+	public static void draw(GuiGraphicsExtractor graphics, int x, int y, int size, boolean done,
+			float alpha, boolean highlight) {
+		int colour = done
+				? HudColors.CHECK
+				: (highlight ? HudColors.CHECKBOX_HOVER : HudColors.CHECKBOX_EMPTY);
 		graphics.outline(x, y, size, size, HudColors.argb(colour, alpha));
 		if (done) {
 			tick(graphics, x, y, size, HudColors.argb(HudColors.CHECK, alpha));

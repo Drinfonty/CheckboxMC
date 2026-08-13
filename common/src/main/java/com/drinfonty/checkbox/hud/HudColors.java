@@ -10,6 +10,8 @@ public final class HudColors {
 	public static final int TEXT_DONE = 0x5ED65E;
 	public static final int CHECK = 0x5ED65E;
 	public static final int CHECKBOX_EMPTY = 0xB0B0B0;
+	/** An empty box the cursor is over, in a screen where it can be clicked. */
+	public static final int CHECKBOX_HOVER = 0xFFFFFF;
 	public static final int TEXT_PAUSED = 0xB0B0B0;
 	public static final int TITLE = 0xFFAA00;
 	public static final int VALUE = 0xAAAAAA;
